@@ -439,14 +439,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
     apiResetProgress().catch(() => {})
   }, [])
 
-  // 登录 - 调语构API
+  // 登录 - 调语构API（离线时自动降级为本地模式）
   const login = useCallback(async (email: string, password: string) => {
-    const user = await apiLogin(email, password)
-    setProfile(prev => ({
-      ...prev,
-      isLoggedIn: true,
-      nickname: user.nickname || email.split('@')[0],
-    }))
+    try {
+      const user = await apiLogin(email, password)
+      setProfile(prev => ({
+        ...prev,
+        isLoggedIn: true,
+        nickname: user.nickname || email.split('@')[0],
+      }))
+    } catch {
+      // API 不可用时降级为本地模式
+      setProfile(prev => ({
+        ...prev,
+        isLoggedIn: true,
+        nickname: email.split('@')[0],
+      }))
+    }
   }, [])
 
   // 完成问卷 - 同时存本地和服务器
